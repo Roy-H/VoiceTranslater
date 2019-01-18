@@ -25,6 +25,11 @@ public class WavUtility
         return ToAudioClip(fileBytes, 0);
     }
 
+    public static AudioClip ToAudioClip(byte[] audio)
+    {
+        return ToAudioClip(audio, 0);
+    }
+
     public static AudioClip ToAudioClip(byte[] fileBytes, int offsetSamples = 0, string name = "wav")
     {
         //string riff = Encoding.ASCII.GetString (fileBytes, 0, 4);

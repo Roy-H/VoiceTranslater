@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 
-public class TranslateManager : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class TranslateManager : MonoBehaviour
 {
     private bool IsRecordingNow;
     private AudioClip mClip;
@@ -14,11 +14,72 @@ public class TranslateManager : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     public Text FileName;
     private byte[] dataReturn;
     private MsSpeechManager mssmrg;
+    private MsTranlateManager msTranslaterManager;
+    private TTSManager mTTSManager;
+    public Dropdown From;
+    public Dropdown To;
+    public Button StopBtn;
+    public Button StartBtn;
+    public Button TTSBtn;
+    public InputField inputField;
+    
 
+    string mfromLang;
+    string mToLang;
+    string region = "eastasia";
 
     private void Awake()
     {
+       
+        From = transform.parent.Find("From").GetComponent<Dropdown>();
+        To = transform.parent.Find("To").GetComponent<Dropdown>();
+        StopBtn = transform.parent.Find("Stop").GetComponent<Button>();
+        StartBtn = transform.parent.Find("Record").GetComponent<Button>();
+        inputField = transform.parent.Find("InputField").GetComponent<InputField>();
+        TTSBtn = transform.parent.Find("TTS").GetComponent<Button>();
+    }
+    static string textForTTS = "hello";
+    static string tolangTTS;
+    private void Start()
+    {
         mssmrg = GetComponent<MsSpeechManager>();
+        msTranslaterManager = GetComponent<MsTranlateManager>();
+        mTTSManager = GetComponent<TTSManager>();
+        TTSBtn.onClick.AddListener(() => 
+        {
+            textForTTS = inputField.text;
+            tolangTTS = mToLang;
+            TTSManager.Speak(textForTTS, mToLang);
+        });
+
+        From.onValueChanged.AddListener((x) =>
+        {
+            From.value = x;
+            mfromLang = From.options[x].text;
+        });
+        To.onValueChanged.AddListener((x) =>
+        {
+            To.value = x;
+            mToLang = To.options[x].text;
+        });
+        StopBtn.onClick.AddListener(() =>
+        {
+            if (msTranslaterManager == null)
+                return;
+            msTranslaterManager.StopTranslate();
+           // mssmrg.StopDtect();
+            StartBtn.interactable = true;
+        });
+        StartBtn.onClick.AddListener(() => 
+        {          
+            if (mfromLang == null || mToLang == null)
+                return;
+            StartBtn.interactable = false;
+            if (msTranslaterManager == null)
+                return;
+            msTranslaterManager.StartTranslate(region, mfromLang, mToLang, new string[] { mToLang });
+            
+        });
     }
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -33,19 +94,36 @@ public class TranslateManager : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     public void OnPointerUp(PointerEventData eventData)
     {
         //StartCoroutine();
-        HandleResult();
+        //HandleResult();
     }
 
+
+     //<ComboBoxItem Tag = "en-US" IsSelected="true">English</ComboBoxItem>
+     //                   <ComboBoxItem Tag = "ar-EG" > Arabic </ ComboBoxItem >
+     //                   < ComboBoxItem Tag="zh-CN">Chinese(Mandarin)</ComboBoxItem>
+     //                   <ComboBoxItem Tag = "fr-FR" > French </ ComboBoxItem >
+     //                   < ComboBoxItem Tag="de-DE">German</ComboBoxItem>
+     //                   <ComboBoxItem Tag = "it-IT" > Italian </ ComboBoxItem >
+     //                   < ComboBoxItem Tag="ja-JP">Japanese</ComboBoxItem>
+     //                   <ComboBoxItem Tag = "pt-BR" > Portuguese </ ComboBoxItem >
+     //                   < ComboBoxItem Tag="ru-RU">Russian</ComboBoxItem>
+     //                   <ComboBoxItem Tag = "es-ES" > Spanish </ ComboBoxItem >
     void HandleResult()
     {
         mssmrg.IsFromFile = false;
-        mssmrg.StartDetect(RecordResultFileName);
+
+        string region = "eastasia";
+        string fromLang = mfromLang;
+        string toLang = mToLang;
+
+        msTranslaterManager.StartTranslate(region, fromLang, toLang,new string[] { toLang });
+        //mssmrg.StartDetect(RecordResultFileName);
         //if (StopRecord(out RecordResultFileName, out dataReturn) == AudioRecordResultState.Success)
         //{
         //    Debug.Log("ok");
         //    //yield return new WaitForSeconds(0.5f);
         //    //FileName.text = RecordResultFileName;
-            
+
         //}
         IsRecordingNow = false;
     }
